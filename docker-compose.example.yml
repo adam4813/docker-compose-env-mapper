@@ -17,4 +17,4 @@ services:
   redis:
     image: redis
     environment:
-      - DB_USERNAME=bob
+      DB_USERNAME: bob

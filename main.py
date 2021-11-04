@@ -34,7 +34,7 @@ def addServiceLink(service, other_service_name):
 def mapEnvVar(key_value, service, service_list_question):
     key, value = key_value
     if "host" in key.lower():
-        answers = prompt(hostLikeQuestion)
+        answers = prompt(hostLikeQuestion(key))
         if answers[answer_key] == choice_dot_env:
             print(f"Using .env key name for host-like key")
             line = formatKeyValue(key, key, True)
@@ -75,22 +75,31 @@ except FileNotFoundError:
         finally:
             docker_compose_example_stream.close()
 
-out_docker_yaml = docker_compose_file
-service_list = list(docker_compose_file["services"].keys())
-for service_name in docker_compose_file["services"]:
+environment_key = "environment"
+services_key = "services"
+
+service_list = list(docker_compose_file[services_key].keys())
+for service_name in docker_compose_file[services_key]:
+    service = docker_compose_file[services_key][service_name]
+    if environment_key not in service:
+        continue
+    service_environment = service[environment_key]
     print(f"Iterating over service {service_name}'s environment variables")
 
     other_services_list = service_list.copy()
     other_services_list.remove(service_name)
 
     service_list_question = serviceListQuestion(other_services_list)
-    service = docker_compose_file["services"][service_name]
-    out_docker_yaml["services"][service_name]["environment"] = list(map(lambda key_value: mapEnvVar(
-        key_value, service, service_list_question), map(splitKV, service["environment"])))
+
+    service_environment_list = map(splitKV, service_environment) if type(service_environment) is list else map(
+        lambda key: [key, service_environment[key]], service_environment)
+
+    docker_compose_file[services_key][service_name][environment_key] = list(map(lambda key_value: mapEnvVar(
+        key_value, service, service_list_question), service_environment_list))
 
 with open("docker-compose-updated.yml", "w") as docker_compose_stream:
     try:
-        yaml.dump(out_docker_yaml, docker_compose_stream)
+        yaml.dump(docker_compose_file, docker_compose_stream)
     except yaml.YAMLError as exc:
         print(exc)
     finally:
