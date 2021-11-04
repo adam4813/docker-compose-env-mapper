@@ -1,0 +1,20 @@
+version: "3.9" # optional since v1.27.0
+services:
+  web:
+    build: .
+    environment:
+      - DB_HOST=redis2
+      - DB_USERNAME=bob
+      - DB_PASSWORD=secret
+      - NO_MATCH=1234
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/code
+      - logvolume01:/var/log
+    links:
+      - redis
+  redis:
+    image: redis
+    environment:
+      - DB_USERNAME=bob
