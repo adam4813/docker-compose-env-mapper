@@ -57,23 +57,20 @@ def mapEnvVar(key_value, service, service_list_question):
     return line
 
 
+def loadYaml(filename):
+    with open(filename, "r") as stream:
+        try:
+            return yaml.load(stream, Loader=yaml.BaseLoader)
+        except yaml.YAMLError as exc:
+            print(exc)
+        finally:
+            stream.close()
+
+
 try:
-    with open("docker-compose.yml", "r") as docker_compose_stream:
-        try:
-            docker_compose_file = yaml.safe_load(docker_compose_stream)
-        except yaml.YAMLError as exc:
-            print(exc)
-        finally:
-            docker_compose_stream.close()
+    docker_compose_file = loadYaml("docker-compose.yml")
 except FileNotFoundError:
-    with open("docker-compose.example.yml", "r") as docker_compose_example_stream:
-        try:
-            docker_compose_file = yaml.safe_load(docker_compose_example_stream)
-            copyfile("docker-compose.example.yml", "docker-compose.yml")
-        except yaml.YAMLError as exc:
-            print(exc)
-        finally:
-            docker_compose_example_stream.close()
+    docker_compose_file = loadYaml("docker-compose.example.yml")
 
 environment_key = "environment"
 services_key = "services"
